@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 public class HQServer {
     private static final int PORT = 5000;
     private static final int WORKER_COUNT = 5;
+    private static final MarsLogger LOGGER = new MarsLogger();
 
     public static void main(String[] args) {
         ExecutorService workerPool = Executors.newFixedThreadPool(WORKER_COUNT);
@@ -39,18 +40,34 @@ public class HQServer {
             while ((line = reader.readLine()) != null) {
                 try {
                     SensorMeasurement measurement = parseMeasurement(line);
-                    if (!measurement.isWithinSafeRange()) {
+                    boolean safe = measurement.isWithinSafeRange();
+                    logMeasurement(measurement, safe);
+
+                    if (!safe) {
                         String alarm = formatAlarm(measurement);
                         System.out.println(alarm);
                         writer.println(alarm);
                     }
                 } catch (IllegalArgumentException exception) {
                     System.err.println("Invalid client data: " + exception.getMessage());
+                } catch (IOException exception) {
+                    System.err.println("Failed to write sensor log: " + exception.getMessage());
                 }
             }
         } catch (IOException exception) {
             System.err.println("Client connection failed: " + exception.getMessage());
         }
+    }
+
+    private static void logMeasurement(SensorMeasurement measurement, boolean safe) throws IOException {
+        String alarmSuffix = safe ? "" : " -> ALARM!";
+        LOGGER.log(String.format(
+                Locale.ROOT,
+                "%s: %s%s",
+                measurement.type(),
+                measurement.value(),
+                alarmSuffix
+        ));
     }
 
     private static String formatAlarm(SensorMeasurement measurement) {
