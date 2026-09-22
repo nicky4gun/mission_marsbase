@@ -1,17 +1,24 @@
 package org.example;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import java.io.PrintWriter;
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+        SensorType sensorType = args.length == 0
+                ? SensorType.TEMP
+                : SensorType.valueOf(args[0].toUpperCase());
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+        PrintWriter out = new PrintWriter(System.out, true);
+        SensorClient sensorClient = new SensorClient(sensorType, out);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(sensorClient::stop));
+        sensorClient.start();
+
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            sensorClient.stop();
         }
     }
 }
