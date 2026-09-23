@@ -49,11 +49,11 @@ public static void main(String[] args) {
                 workerPool.submit(() -> handleClient(clientSocket));
             }
 **Et forslag eller en ændring fra AI-agenten, som I ændrede eller afviste:**
+
 public HQServer(int port) {
         this(port, Executors.newFixedThreadPool(DEFAULT_WORKER_COUNT));
     }
     
-
     HQServer(int port, ExecutorService workerPool) {
         if (port < 0 || port > 65_535) {
             throw new IllegalArgumentException("port must be between 0 and 65535");
@@ -61,5 +61,11 @@ public HQServer(int port) {
         this.port = port;
         this.workerPool = Objects.requireNonNull(workerPool, "workerPool must not be null");
     }
+
+**svar på både afviste og godkendte**
+** efter at have kigget på dette forslag for ageten og fandt ud af hvad det enelig hvad det betyd  var vi engi om at det måske ikke var så nød vendigt for vores program at kunne for telle at en port er ugyldtigt 
+eller ej der for spurgte vi den om den ikke kunne ændre det**
+
+
 **Hvordan testede I, at AI-generede kode virkede?**
 unit tested coden for at være sikker på at valideringen virked samt at programet ville give besked på at der var noget der var overskredet 
