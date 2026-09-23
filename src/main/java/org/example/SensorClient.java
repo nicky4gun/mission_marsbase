@@ -13,7 +13,6 @@ import java.util.Objects;
 public class SensorClient {
     private static final String HOST = "localhost";
     private static final int PORT = 5000;
-    private static final int SOCKET_TIMEOUT_MILLISECONDS = 10_000;
     private static final long MEASUREMENT_INTERVAL_SECONDS = 5;
 
     private final MeasurementGenerator generator;
@@ -98,8 +97,7 @@ public class SensorClient {
             SensorType sensorType = parseSensorType(input);
 
             try (Socket socket = new Socket()) {
-                socket.connect(new InetSocketAddress(HOST, PORT), SOCKET_TIMEOUT_MILLISECONDS);
-                socket.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
+                socket.connect(new InetSocketAddress(HOST, PORT));
 
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                  PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
