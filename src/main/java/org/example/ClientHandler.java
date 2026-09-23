@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Locale;
 
 public class ClientHandler implements Runnable {
+    private static final int SOCKET_TIMEOUT_MILLISECONDS = 10_000;
     private static final MarsLogger LOGGER = new MarsLogger();
 
     private final Socket clientSocket;
@@ -22,6 +24,7 @@ public class ClientHandler implements Runnable {
         try (clientSocket;
              BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
+            clientSocket.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             String line;
             while ((line = reader.readLine()) != null) {
                 try {
@@ -43,6 +46,8 @@ public class ClientHandler implements Runnable {
                     HQServer.printError("Failed to write sensor log: " + exception.getMessage());
                 }
             }
+        } catch (SocketTimeoutException exception) {
+            HQServer.printError("Sensor " + sensorName + " overskred socket-timeout.");
         } catch (IOException exception) {
             HQServer.printError("Sensor " + sensorName + " mistede forbindelsen.");
         }
