@@ -4,13 +4,16 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Locale;
 import java.util.Objects;
 
 public class SensorClient {
     private static final String HOST = "localhost";
     private static final int PORT = 5000;
+    private static final int SOCKET_TIMEOUT_MILLISECONDS = 10_000;
     private static final long MEASUREMENT_INTERVAL_SECONDS = 5;
 
     private final MeasurementGenerator generator;
@@ -78,6 +81,8 @@ public class SensorClient {
             while ((message = in.readLine()) != null) {
                 System.out.println(message);
             }
+        } catch (SocketTimeoutException exception) {
+            System.err.println("[ERROR] Forbindelsen til HQServer overskred socket-timeout.");
         } catch (IOException exception) {
             if (!Thread.currentThread().isInterrupted()) {
                 System.err.println("[ERROR] Forbindelsen til HQServer blev afbrudt: "
@@ -92,17 +97,21 @@ public class SensorClient {
             String input = keyboard.readLine();
             SensorType sensorType = parseSensorType(input);
 
-            try (Socket socket = new Socket(HOST, PORT);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-                SensorClient sensorClient = new SensorClient(sensorType, out, in);
-                sensorClient.start();
+            try (Socket socket = new Socket()) {
+                socket.connect(new InetSocketAddress(HOST, PORT), SOCKET_TIMEOUT_MILLISECONDS);
+                socket.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
 
-                try {
-                    Thread.currentThread().join();
-                } catch (InterruptedException exception) {
-                    Thread.currentThread().interrupt();
-                    sensorClient.stop();
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+                    SensorClient sensorClient = new SensorClient(sensorType, out, in);
+                    sensorClient.start();
+
+                    try {
+                        Thread.currentThread().join();
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        sensorClient.stop();
+                    }
                 }
             }
         } catch (IllegalArgumentException exception) {
