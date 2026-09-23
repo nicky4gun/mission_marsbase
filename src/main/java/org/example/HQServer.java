@@ -16,9 +16,8 @@ public class HQServer {
     private static final MarsLogger LOGGER = new MarsLogger();
 
     public static void main(String[] args) {
-        ExecutorService workerPool = Executors.newFixedThreadPool(WORKER_COUNT);
-
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+        try (ExecutorService workerPool = Executors.newFixedThreadPool(WORKER_COUNT);
+             ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("HQServer started on port " + PORT);
 
             while (!serverSocket.isClosed()) {
@@ -26,13 +25,12 @@ public class HQServer {
                 workerPool.execute(() -> handleClient(clientSocket));
             }
         } catch (IOException exception) {
-            System.err.println("HQServer failed: " + exception.getMessage());
-        } finally {
-            workerPool.shutdown();
+            printError("HQServer failed: " + exception.getMessage());
         }
     }
 
     private static void handleClient(Socket clientSocket) {
+        String sensorName = clientSocket.getRemoteSocketAddress().toString();
         try (clientSocket;
              BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
@@ -40,6 +38,7 @@ public class HQServer {
             while ((line = reader.readLine()) != null) {
                 try {
                     SensorMeasurement measurement = parseMeasurement(line);
+                    sensorName = measurement.type().name();
                     boolean safe = measurement.isWithinSafeRange();
                     logMeasurement(measurement, safe);
 
@@ -48,14 +47,16 @@ public class HQServer {
                         System.out.println(alarm);
                         writer.println(alarm);
                     }
+                } catch (NumberFormatException exception) {
+                    printError("Invalid measurement value: " + exception.getMessage());
                 } catch (IllegalArgumentException exception) {
-                    System.err.println("Invalid client data: " + exception.getMessage());
+                    printError("Invalid client data: " + exception.getMessage());
                 } catch (IOException exception) {
-                    System.err.println("Failed to write sensor log: " + exception.getMessage());
+                    printError("Failed to write sensor log: " + exception.getMessage());
                 }
             }
         } catch (IOException exception) {
-            System.err.println("Client connection failed: " + exception.getMessage());
+            printError("Sensor " + sensorName + " mistede forbindelsen.");
         }
     }
 
@@ -92,13 +93,12 @@ public class HQServer {
         }
 
         String valueText = parts[1].trim().split("\\s+", 2)[0];
-        double value;
-        try {
-            value = Double.parseDouble(valueText);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("Invalid measurement value: " + valueText, exception);
-        }
+        double value = Double.parseDouble(valueText);
 
         return new SensorMeasurement(sensorType, value);
+    }
+
+    private static void printError(String message) {
+        System.err.println("[ERROR] " + message);
     }
 }
