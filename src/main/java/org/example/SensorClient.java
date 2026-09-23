@@ -7,29 +7,23 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Random;
 
 public class SensorClient {
     private static final String HOST = "localhost";
     private static final int PORT = 5000;
     private static final long MEASUREMENT_INTERVAL_SECONDS = 5;
 
-    private final SensorType sensorType;
+    private final MeasurementGenerator generator;
+
     private final PrintWriter out;
     private final BufferedReader in;
-    private final Random random;
     private Thread sendingThread;
     private Thread receivingThread;
 
-    public SensorClient(SensorType sensorType, PrintWriter out, BufferedReader in) {
-        this(sensorType, out, in, new Random());
-    }
-
-    SensorClient(SensorType sensorType, PrintWriter out, BufferedReader in, Random random) {
-        this.sensorType = Objects.requireNonNull(sensorType, "sensorType must not be null");
+    SensorClient(SensorType sensorType, PrintWriter out, BufferedReader in) {
+        this.generator = new MeasurementGenerator(sensorType);
         this.out = Objects.requireNonNull(out, "out must not be null");
         this.in = in;
-        this.random = Objects.requireNonNull(random, "random must not be null");
     }
 
     public synchronized void start() {
@@ -75,7 +69,7 @@ public class SensorClient {
     }
 
     private void sendMeasurement() {
-        out.println(generateMeasurement());
+        out.println(generator.generateMeasurement());
     }
 
     private void receiveAlarms() {
@@ -129,14 +123,5 @@ public class SensorClient {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Ukendt sensortype: " + input.trim(), exception);
         }
-    }
-
-    private String generateMeasurement() {
-        return switch (sensorType) {
-            case TEMP -> String.format(Locale.ROOT, "TEMP: %.1f °C", random.nextDouble(-30, 46));
-            case O2 -> String.format(Locale.ROOT, "O2: %.1f %%", random.nextDouble(15, 28));
-            case PRESSURE -> String.format(Locale.ROOT, "PRESSURE: %.1f hPa", random.nextDouble(700, 1201));
-            case CO2 -> String.format(Locale.ROOT, "CO2: %.0f ppm", random.nextDouble(500, 3001));
-        };
     }
 }
