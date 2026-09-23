@@ -30,8 +30,7 @@ SERVER Issue #2
 - Tjek mod grænser og skriv til logfil (mars.log)
 - Hvis alarm: skriv alarm i konsol og til klient
 
-vi viste at der kun måtte være 5 tråde og tjekker mod grænser og skive logfil til mas.log
-samt skulle der være en alarm som bliv sat til klienten 
+Opgaven var afgrænset ved, at vi besluttede, at programmet højst måtte benytte 5 tråde ved hjælp af ExecutorService. Derudover skulle programmet kontrollere de modtagne værdier i forhold til de angivne grænser og skrive resultaterne til logfilen mars.log. Hvis en værdi overskred grænserne, skulle programmet udløse en alarm, som både blev vist i konsollen og sendt videre til klienten. På den måde sikrede vi, at programmet kunne håndtere flere klienter samtidig, samtidig med at det registrerede og reagerede på værdier, der lå uden for de tilladte grænser.
 
 **Et forslag eller en ændring fra AI-agenten, som I accepterede:**
 
@@ -62,10 +61,9 @@ public HQServer(int port) {
         this.workerPool = Objects.requireNonNull(workerPool, "workerPool must not be null");
     }
 
-**svar på både afviste og godkendte**
-** efter at have kigget på dette forslag for ageten og fandt ud af hvad det enelig hvad det betyd  var vi engi om at det måske ikke var så nød vendigt for vores program at kunne for telle at en port er ugyldtigt 
-eller ej der for spurgte vi den om den ikke kunne ændre det**
+**svar på både afviste og godkendte AI forslag**
 
+Efter at have kigget på den foreslåede kode og fundet ud af, hvad den egentlig gjorde, blev vi enige om, at det ikke var nødvendigt for vores program at kontrollere, om en port var gyldig eller ej. Derfor bad vi agenten om at ændre koden, så denne funktion blev fjernet. På den måde blev koden mere enkel og fokuserede på de funktioner, som vores program  havde brug for.
 
 **Hvordan testede I, at AI-generede kode virkede?**
 unit tested coden for at være sikker på at valideringen virked samt at programet ville give besked på at der var noget der var overskredet 
